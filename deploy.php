@@ -3,26 +3,25 @@ namespace Deployer;
 
 require 'recipe/laravel.php';
 
-// Project name
+
 set('application', 'weather-app');
 
-// Project repository
+
 set('repository', 'git@github.com:your-username/weather-app.git');
 
-// [Optional] Allocate tty for git clone. Default value is false.
+
 set('git_tty', true);
 
-// Shared files/dirs between deploys
-add('shared_files', []);
-add('shared_dirs', []);
 
-// Writable dirs by web server
-add('writable_dirs', []);
+add('shared_files', ['.env']); 
+add('shared_dirs', ['storage']); 
 
-// Hosts
-host('your-zone-server.com') // Replace with your Zone.ee server address
-    ->set('remote_user', 'your-username') // Replace with your Zone.ee username
-    ->set('deploy_path', '/home/your-username/weather-app'); // Replace with your deploy path
 
-// Hooks
+add('writable_dirs', ['bootstrap/cache', 'storage']); 
+host('dn-68-25.tll01.zoneas.eu') 
+    ->set('remote_user', 'virt118441') 
+    ->set('deploy_path', '/home/virt118441/domeenid/tak22lasn.itmajakas.ee/public_html');
+
+
 after('deploy:failed', 'deploy:unlock');
+before('deploy:symlink', 'artisan:migrate'); 
