@@ -3,99 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
+    <title>Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: white;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
             height: 100vh;
         }
-        #map-container {
-            width: 80%;
-            max-width: 800px;
-            height: 500px;
-            margin-top: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
         #map {
-            width: 100%;
-            height: 100%;
+            width: 80%;
+            height: 80%;
+            margin-top: 20px;
+            border-radius: 10px;
         }
     </style>
-    <link href="https://js.radar.com/v4.5.1/radar.css" rel="stylesheet">
-    <script src="https://js.radar.com/v4.5.1/radar.min.js"></script>
 </head>
 <body>
     
-    <div id="map-container">
-        <div id="map"></div>
-    </div>
+    <div id="map"></div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        
-        Radar.initialize('prj_live_pk_9164a6ba3513c7db6dc25c1175e28f8979b29509');
+        const map = L.map('map').setView([0, 0], 2); 
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-        
-        const map = Radar.ui.map({
-            container: 'map',
-            style: 'radar-default-v1',
-            center: [-73.9911, 40.7342],
-            zoom: 14,
-        });
-
-        
-        async function loadMarkers() {
-            const response = await fetch('/markers');
-            const markers = await response.json();
-            markers.forEach(marker => {
-                Radar.ui.marker({
-                    map: map,
-                    position: [marker.longitude, marker.latitude],
-                    icon: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-                    popup: {
-                        content: `<strong>${marker.description || 'No description'}</strong>`,
-                    },
+        fetch('/markers')
+            .then(response => response.json())
+            .then(markers => {
+                markers.forEach(marker => {
+                    const markerInstance = L.marker([marker.latitude, marker.longitude])
+                        .addTo(map)
+                        .bindPopup(`${marker.description || 'No description'}<br>Lat: ${marker.latitude}, Lng: ${marker.longitude}`);
+                    markerInstance.on('contextmenu', () => {
+                        if (confirm('Do you want to delete this marker?')) {
+                            fetch(`/markers/${marker.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            }).then(response => {
+                                if (response.ok) {
+                                    map.removeLayer(markerInstance);
+                                } else {
+                                    alert('Failed to delete marker.');
+                                }
+                            }).catch(error => {
+                                alert('An error occurred while deleting the marker.');
+                                console.error(error);
+                            });
+                        }
+                    });
                 });
+            }).catch(error => {
+                alert('An error occurred while fetching markers.');
+                console.error(error);
             });
-        }
 
-        loadMarkers();
-
-        // Add a marker on map click and save it to the database
-        map.on('click', async (event) => {
-            const { lng, lat } = event.lngLat;
+        map.on('click', function(e) {
+            const { lat, lng } = e.latlng;
             const description = prompt('Enter a description for this marker:');
-
-            Radar.ui.marker({
-                map: map,
-                position: [lng, lat],
-                icon: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-                popup: {
-                    content: `<strong>${description || 'No description'}</strong>`,
-                },
-            });
-
-            await fetch('/markers', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                },
-                body: JSON.stringify({
-                    latitude: lat,
-                    longitude: lng,
-                    description: description,
-                }),
-            });
+            if (description !== null) {
+                fetch('/markers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ latitude: lat, longitude: lng, description })
+                })
+                .then(response => response.json())
+                .then(marker => {
+                    const markerInstance = L.marker([marker.latitude, marker.longitude])
+                        .addTo(map)
+                        .bindPopup(`${marker.description || 'No description'}<br>Lat: ${marker.latitude}, Lng: ${marker.longitude}`);
+                    markerInstance.on('contextmenu', () => {
+                        if (confirm('Do you want to delete this marker?')) {
+                            fetch(`/markers/${marker.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            }).then(response => {
+                                if (response.ok) {
+                                    map.removeLayer(markerInstance);
+                                } else {
+                                    alert('Failed to delete marker.');
+                                }
+                            }).catch(error => {
+                                alert('An error occurred while deleting the marker.');
+                                console.error(error);
+                            });
+                        }
+                    });
+                }).catch(error => {
+                    alert('An error occurred while adding the marker.');
+                    console.error(error);
+                });
+            }
         });
     </script>
 </body>
