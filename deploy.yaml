@@ -22,7 +22,7 @@ tasks:
     - 'deploy:vendors'
     - 'artisan:storage:link'
     - 'artisan:optimize:clear'
-    - 'artisan:optimize'
+    # - 'artisan:optimize'
     - 'deploy:publish'
 
 after:
