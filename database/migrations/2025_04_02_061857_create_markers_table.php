@@ -12,6 +12,7 @@ class CreateMarkersTable extends Migration
             $table->id();
             $table->decimal('latitude', 10, 7);
             $table->decimal('longitude', 10, 7);
+            $table->string('title');
             $table->string('description');
             $table->timestamps();
         });

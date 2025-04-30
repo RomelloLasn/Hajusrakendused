@@ -9,5 +9,5 @@ class Marker extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['latitude', 'longitude', 'description'];
+    protected $fillable = ['latitude', 'longitude', 'title', 'description'];
 }

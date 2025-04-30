@@ -17,21 +17,25 @@ class MarkerController extends Controller
         $request->validate([
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'title' => 'required|string|max:255',
             'description' => 'required|string|max:255',
         ]);
 
-        $marker = Marker::create($request->only(['latitude', 'longitude', 'description']));
+        $marker = Marker::create($request->only(['latitude', 'longitude', 'title', 'description']));
         return response()->json($marker);
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
+            'title' => 'required|string|max:255',
             'description' => 'required|string|max:255',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
         ]);
 
         $marker = Marker::findOrFail($id);
-        $marker->update($request->only(['description']));
+        $marker->update($request->only(['title', 'description', 'latitude', 'longitude']));
         return response()->json(['success' => true, 'message' => 'Marker updated successfully', 'marker' => $marker]);
     }
 

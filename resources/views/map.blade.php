@@ -64,8 +64,14 @@
     <div id="edit-marker-modal">
         <h3>Edit Marker</h3>
         <input type="hidden" id="edit-marker-id">
+        <label for="edit-title">Title:</label>
+        <input type="text" id="edit-title" required />
         <label for="edit-description">Description:</label>
         <textarea id="edit-description" required></textarea>
+        <label for="edit-latitude">Latitude:</label>
+        <input type="number" id="edit-latitude" step="0.000001" required />
+        <label for="edit-longitude">Longitude:</label>
+        <input type="number" id="edit-longitude" step="0.000001" required />
         <button onclick="submitEditForm()">Save</button>
         <button onclick="closeEditModal()">Cancel</button>
     </div>
@@ -81,7 +87,12 @@
 
         // Fetch and display markers
         fetch('/markers')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch markers');
+                }
+                return response.json();
+            })
             .then(markers => {
                 markers.forEach(marker => {
                     const markerInstance = L.marker([marker.latitude, marker.longitude])
@@ -94,8 +105,10 @@
         function createPopupContent(marker) {
             return `
                 <div>
-                    <p>${marker.description || 'No description'}</p>
-                    <button onclick="editMarker(${marker.id}, '${marker.description}')">Edit</button>
+                    <p><strong>Title:</strong> ${marker.title || 'No title'}</p>
+                    <p><strong>Description:</strong> ${marker.description || 'No description'}</p>
+                    <p><strong>Coordinates:</strong> ${marker.latitude}, ${marker.longitude}</p>
+                    <button onclick="editMarker(${marker.id}, '${marker.title}', '${marker.description}', ${marker.latitude}, ${marker.longitude})">Edit</button>
                     <button onclick="deleteMarker(${marker.id})">Delete</button>
                 </div>
             `;
@@ -104,17 +117,23 @@
         // Add a new marker
         map.on('click', function (e) {
             const { lat, lng } = e.latlng;
+            const title = prompt('Enter a title for this marker:');
             const description = prompt('Enter a description for this marker:');
-            if (description !== null) {
+            if (title && description) {
                 fetch('/markers', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ latitude: lat, longitude: lng, description })
+                    body: JSON.stringify({ latitude: lat, longitude: lng, title, description })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to add marker');
+                    }
+                    return response.json();
+                })
                 .then(marker => {
                     console.log('Marker added:', marker);
                     L.marker([marker.latitude, marker.longitude])
@@ -125,9 +144,12 @@
             }
         });
 
-        function editMarker(id, description) {
+        function editMarker(id, title, description, latitude, longitude) {
             document.getElementById('edit-marker-id').value = id;
+            document.getElementById('edit-title').value = title;
             document.getElementById('edit-description').value = description;
+            document.getElementById('edit-latitude').value = latitude;
+            document.getElementById('edit-longitude').value = longitude;
             document.getElementById('edit-marker-modal').style.display = 'block';
         }
 
@@ -137,7 +159,10 @@
 
         function submitEditForm() {
             const id = document.getElementById('edit-marker-id').value;
+            const title = document.getElementById('edit-title').value;
             const description = document.getElementById('edit-description').value;
+            const latitude = parseFloat(document.getElementById('edit-latitude').value);
+            const longitude = parseFloat(document.getElementById('edit-longitude').value);
 
             fetch(`/markers/${id}`, {
                 method: 'PUT',
@@ -145,9 +170,14 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ description })
+                body: JSON.stringify({ title, description, latitude, longitude })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update marker');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     alert('Marker updated successfully!');
@@ -167,7 +197,12 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     }
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to delete marker');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         alert('Marker deleted successfully!');
