@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -40,6 +41,7 @@ class RegisteredUserController extends Controller
 
         auth()->login($user);
 
-        return redirect()->route('dashboard'); // Redirect to the dashboard after registration
+        // Redirect to the blog page after registration
+        return redirect()->route('blog.index');
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+
 use App\Http\Controllers\MarkerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BlogPostController;
@@ -10,18 +11,19 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Markers and Map
-Route::get('/markers', [MarkerController::class, 'index']); // Fetch all markers
-Route::post('/markers', [MarkerController::class, 'store']); // Create a new marker
-Route::put('/markers/{id}', [MarkerController::class, 'update']); // Update a marker
-Route::delete('/markers/{id}', [MarkerController::class, 'destroy']); // Delete a marker
+Route::get('/markers', [MarkerController::class, 'index']);
+Route::post('/markers', [MarkerController::class, 'store']);
+Route::put('/markers/{id}', [MarkerController::class, 'update']);
+Route::delete('/markers/{id}', [MarkerController::class, 'destroy']);
 
 Route::get('/map', function () {
     return view('map');
 });
 
-// Authentication Routes
-require __DIR__.'/auth.php';
+// REMOVE or COMMENT OUT this line to disable Inertia/React auth routes
+// require __DIR__.'/auth.php';
 
+// Authentication Routes (Blade)
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('/register', [RegisteredUserController::class, 'store']);
@@ -49,7 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Default Homepage
+// Default Homepage: redirect to blog index
 Route::get('/', function () {
-    return view('weather');
+    return redirect()->route('blog.index');
 });

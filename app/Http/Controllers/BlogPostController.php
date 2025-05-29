@@ -1,4 +1,6 @@
 <?php
+
+
 namespace App\Http\Controllers;
 
 use App\Models\BlogPost;
@@ -19,14 +21,15 @@ class BlogPostController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
         ]);
 
-        BlogPost::create($request->all());
+        $blogPost = BlogPost::create($validated);
 
-        return redirect()->route('blog.index')->with('success', 'Post created successfully.');
+        // Redirect to the show page for the new post
+        return redirect()->route('blog.show', $blogPost)->with('success', 'Post created successfully.');
     }
 
     public function show(BlogPost $blogPost)
@@ -41,12 +44,12 @@ class BlogPostController extends Controller
 
     public function update(Request $request, BlogPost $blogPost)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
         ]);
 
-        $blogPost->update($request->all());
+        $blogPost->update($validated);
 
         return redirect()->route('blog.index')->with('success', 'Post updated successfully.');
     }
